@@ -49,7 +49,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "jest",
-    "predeploy": "expo export -p web",
+    "predeploy": "expo export -p web && cp 'dist/+not-found.html' dist/404.html",
     "deploy": "gh-pages --nojekyll -d dist"
   },
   "jest": {
