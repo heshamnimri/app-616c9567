@@ -1,40 +1,30 @@
-import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useRef } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { CameraScanner } from '@/components/camera-scanner';
 import { Spacing } from '@/constants/theme';
 import { useScanStore } from '@/hooks/use-scan-store';
-import { lookupBarcode } from '@/lib/open-food-facts';
 
 export default function ScanScreen() {
   const router = useRouter();
-  const setFound = useScanStore((state) => state.setFound);
-  const setNotFound = useScanStore((state) => state.setNotFound);
-  const isLoadingRef = useRef(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const lookup = useScanStore((state) => state.lookup);
+  const scannedRef = useRef(false);
 
-  async function handleScanned(barcode: string) {
-    if (isLoadingRef.current) return;
-    isLoadingRef.current = true;
-    setIsLoading(true);
-    setErrorMessage(null);
+  // Re-arm the scanner every time this screen regains focus (e.g. after "Scan again").
+  useFocusEffect(
+    useCallback(() => {
+      scannedRef.current = false;
+    }, []),
+  );
 
-    const result = await lookupBarcode(barcode);
-
-    if (result.status === 'found') {
-      setFound(barcode, result.product);
-      router.push('/results');
-    } else if (result.status === 'not_found') {
-      setNotFound(barcode);
-      router.push('/manual-scan');
-    } else {
-      setErrorMessage(result.message);
-    }
-
-    isLoadingRef.current = false;
-    setIsLoading(false);
+  function handleScanned(barcode: string) {
+    if (scannedRef.current) return;
+    scannedRef.current = true;
+    // Kick off the lookup and hand the user straight to the results screen, which shows the
+    // loading animation and then the outcome (found / item not found / error).
+    lookup(barcode);
+    router.push('/results');
   }
 
   return (
@@ -49,17 +39,6 @@ export default function ScanScreen() {
         </View>
         <Text style={styles.hint}>Line up the barcode inside the box</Text>
       </View>
-      {isLoading && (
-        <View style={[styles.loadingOverlay, styles.noPointerEvents]}>
-          <ActivityIndicator size="large" color="#ffffff" />
-          <Text style={styles.loadingText}>Looking up product…</Text>
-        </View>
-      )}
-      {errorMessage && (
-        <View style={[styles.errorBanner, styles.noPointerEvents]}>
-          <Text style={styles.errorText}>{errorMessage}</Text>
-        </View>
-      )}
     </View>
   );
 }
@@ -130,32 +109,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     borderRadius: Spacing.two,
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    bottom: Spacing.six,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  loadingText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  errorBanner: {
-    position: 'absolute',
-    bottom: Spacing.six,
-    left: Spacing.four,
-    right: Spacing.four,
-    backgroundColor: 'rgba(229,72,77,0.9)',
-    borderRadius: Spacing.two,
-    padding: Spacing.three,
-  },
-  errorText: {
-    color: '#ffffff',
-    textAlign: 'center',
-    fontWeight: '600',
   },
 });

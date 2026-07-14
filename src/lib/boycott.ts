@@ -53,35 +53,31 @@ function getIndex(): Map<string, IndexEntry> {
 
 /**
  * Checks product brand/manufacturer names against the bundled TechForPalestine snapshot
- * (github.com/TechForPalestine/boycott-israeli-consumer-goods-dataset). Brand names are
- * checked first, then manufacturer/company names.
+ * (github.com/TechForPalestine/boycott-israeli-consumer-goods-dataset). Brands are checked
+ * before manufacturers/companies. Returns 'boycotted' on an "avoid" match, 'clear' on a
+ * known non-avoid match, and 'unknown' when nothing in the dataset matches.
  */
 export function checkBoycott(brands: string[], manufacturers: string[]): BoycottResult {
   const index = getIndex();
+  let nonAvoidMatch: IndexEntry | undefined;
 
-  for (const brand of brands) {
-    const match = index.get(normalize(brand));
-    if (match && match.entry.status === 'avoid') {
+  for (const name of [...brands, ...manufacturers]) {
+    const match = index.get(normalize(name));
+    if (!match) continue;
+    if (match.entry.status === 'avoid') {
       return {
-        isBoycotted: true,
+        status: 'boycotted',
         matchedName: match.entry.name,
         matchType: match.type,
         reasons: match.type === 'brand' ? match.entry.reasons : undefined,
       };
     }
+    nonAvoidMatch ??= match;
   }
 
-  for (const manufacturer of manufacturers) {
-    const match = index.get(normalize(manufacturer));
-    if (match && match.entry.status === 'avoid') {
-      return {
-        isBoycotted: true,
-        matchedName: match.entry.name,
-        matchType: match.type,
-        reasons: match.type === 'brand' ? match.entry.reasons : undefined,
-      };
-    }
+  if (nonAvoidMatch) {
+    return { status: 'clear', matchedName: nonAvoidMatch.entry.name, matchType: nonAvoidMatch.type };
   }
 
-  return { isBoycotted: false };
+  return { status: 'unknown' };
 }

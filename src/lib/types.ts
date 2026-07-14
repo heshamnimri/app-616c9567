@@ -35,8 +35,15 @@ export interface ScoreResult {
   metrics: MetricResult[];
 }
 
+export type BoycottStatus = 'boycotted' | 'clear' | 'unknown';
+
 export interface BoycottResult {
-  isBoycotted: boolean;
+  /**
+   * 'boycotted' — brand/company matched an "avoid" entry.
+   * 'clear' — matched a known non-avoid entry.
+   * 'unknown' — no matching entry in the dataset, so its status can't be determined.
+   */
+  status: BoycottStatus;
   matchedName?: string;
   matchType?: 'brand' | 'company';
   reasons?: string[];
