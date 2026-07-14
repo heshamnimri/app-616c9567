@@ -61,6 +61,12 @@ export async function lookupBarcode(barcode: string): Promise<LookupResult> {
     return { status: 'error', message: err instanceof Error ? err.message : 'Network error' };
   }
 
+  // OFF v2 returns HTTP 404 (with a body of `status: 0`) when the barcode simply isn't in the
+  // database. That's a normal "no product" outcome, not a failure — route it to manual entry.
+  if (response.status === 404) {
+    return { status: 'not_found' };
+  }
+
   if (!response.ok) {
     return { status: 'error', message: `Open Food Facts request failed (${response.status})` };
   }

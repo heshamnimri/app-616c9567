@@ -1,7 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CameraScanner } from '@/components/camera-scanner';
 import { Spacing } from '@/constants/theme';
@@ -41,9 +40,15 @@ export default function ScanScreen() {
   return (
     <View style={styles.container}>
       <CameraScanner onScanned={handleScanned} />
-      <SafeAreaView style={[styles.overlay, styles.noPointerEvents]}>
-        <Text style={styles.hint}>Point the camera at a barcode</Text>
-      </SafeAreaView>
+      <View style={[styles.overlay, styles.noPointerEvents]}>
+        <View style={styles.frame}>
+          <View style={[styles.corner, styles.cornerTopLeft]} />
+          <View style={[styles.corner, styles.cornerTopRight]} />
+          <View style={[styles.corner, styles.cornerBottomLeft]} />
+          <View style={[styles.corner, styles.cornerBottomRight]} />
+        </View>
+        <Text style={styles.hint}>Line up the barcode inside the box</Text>
+      </View>
       {isLoading && (
         <View style={[styles.loadingOverlay, styles.noPointerEvents]}>
           <ActivityIndicator size="large" color="#ffffff" />
@@ -69,11 +74,53 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
+    bottom: 0,
     alignItems: 'center',
-    paddingTop: Spacing.four,
+    justifyContent: 'center',
+    gap: Spacing.four,
   },
   noPointerEvents: {
     pointerEvents: 'none',
+  },
+  frame: {
+    width: '78%',
+    maxWidth: 420,
+    aspectRatio: 1.6,
+    borderRadius: Spacing.three,
+  },
+  corner: {
+    position: 'absolute',
+    width: 34,
+    height: 34,
+    borderColor: '#ffffff',
+  },
+  cornerTopLeft: {
+    top: 0,
+    left: 0,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+    borderTopLeftRadius: Spacing.three,
+  },
+  cornerTopRight: {
+    top: 0,
+    right: 0,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+    borderTopRightRadius: Spacing.three,
+  },
+  cornerBottomLeft: {
+    bottom: 0,
+    left: 0,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+    borderBottomLeftRadius: Spacing.three,
+  },
+  cornerBottomRight: {
+    bottom: 0,
+    right: 0,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+    borderBottomRightRadius: Spacing.three,
   },
   hint: {
     color: '#ffffff',
